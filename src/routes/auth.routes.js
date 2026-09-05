@@ -53,4 +53,11 @@ router.post("/logout", authUser, authControllers.logoutUserController)
  */
 router.post("/logout-all", authUser, authControllers.logoutAllController)
 
+/**
+ * @route GET /api/v1/auth/get-me
+ * @desc fetched and returns the users data
+ * @access private
+ */
+router.post("/get-me", authUser, authControllers.getMeController)
+
 export default router

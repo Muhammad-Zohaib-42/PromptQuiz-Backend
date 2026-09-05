@@ -329,3 +329,23 @@ export const logoutAllController = asyncHandler(async (req, res) => {
         new ApiResponse(200, "user loggedOut from all devices successfully")
     )
 })
+
+/**
+ * @route GET /api/v1/auth/get-me
+ * @desc expects access token from request headers and fetched and returns the users data
+ * @access private
+ */
+export const getMeController = asyncHandler(async (req, res) => {
+    const {user} = req
+
+    return res.status(200).json(
+        new ApiResponse(200, "user fetched successfully", {
+            user: {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                isVerified: user.isVerified
+            }
+        })
+    )
+})

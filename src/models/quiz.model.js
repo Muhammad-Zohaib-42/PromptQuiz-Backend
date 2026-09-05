@@ -6,26 +6,29 @@ const quizSchema = new Schema({
         ref: "User",
         required: [true, "user id is required"]
     },
-    prompt: {
+    topic: {
         type: String,
         required: [true, "user prompt is required"]
     },
-    QuestionFormat: {
-        type: String,
-        required: [true, "quiz format is required"]
+    length: {
+        type: Number,
+        required: [true, "quiz length is required"]
     },
-    difficultyLevel: {
+    difficulty: {
         type: String,
         required: [true, "difficulty level is required"]
     },
-    perQuestionTimer: {
+    format: {
+        type: String,
+        required: [true, "quiz format is required"]
+    },
+    timer: {
         type: Number,
         required: [true, "per question countdown timer is required"]
     },
     quiz: {
         type: [
             {
-                id: String,
                 question: String,
                 options: [String],
                 correctAnswer: String,
