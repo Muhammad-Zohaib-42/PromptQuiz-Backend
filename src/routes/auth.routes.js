@@ -58,6 +58,6 @@ router.post("/logout-all", authUser, authControllers.logoutAllController)
  * @desc fetched and returns the users data
  * @access private
  */
-router.post("/get-me", authUser, authControllers.getMeController)
+router.get("/get-me", authUser, authControllers.getMeController)
 
 export default router

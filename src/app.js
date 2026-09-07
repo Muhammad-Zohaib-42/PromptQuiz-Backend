@@ -1,10 +1,13 @@
 import express from "express"
 import cookieParser from "cookie-parser"
+import { config } from "./config/config.js"
+import cors from "cors"
 
 const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
+app.use(cors({origin: config.ORIGIN, credentials: true}))
 
 app.use((err, req, res, next) => {
     const statusCode = err.status || 500

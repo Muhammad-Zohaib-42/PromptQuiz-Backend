@@ -1,3 +1,4 @@
+import { config } from "../config/config.js";
 import { refreshTokenOptions } from "../constants.js";
 import { otpModel } from "../models/otp.model.js";
 import { sessionModel } from "../models/session.model.js";
@@ -8,6 +9,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateAccessAndRefreshTokens, generateOtp, generateOtpHtml } from "../utils/utils.js";
 import crypto from "crypto"
+import jwt from "jsonwebtoken"
 
 /**
  * @route POST /api/v1/auth/register
@@ -41,6 +43,8 @@ export const registerUserController = asyncHandler(async (req, res) => {
         )
     }
 
+    const {accessToken, refreshToken} = generateAccessAndRefreshTokens(user)
+
     const otp = generateOtp()
     const otpHtml = generateOtpHtml(otp)
 
@@ -54,13 +58,12 @@ export const registerUserController = asyncHandler(async (req, res) => {
 
     const response = await sendEmail(email, otpHtml)
 
-    console.log(response)
-
-    return res.status(201).json(
+    return res.status(201).cookie("refreshToken", refreshToken, refreshTokenOptions).json(
         new ApiResponse(201, "User registered successfully. Please check your email for the OTP verification code", {
             user: {userId: user._id,
             email: user.email,
-            isVerified: user.isVerified}
+            isVerified: user.isVerified},
+            accessToken
         })
     )
 })
@@ -251,7 +254,15 @@ export const rotateTokensController = asyncHandler(async (req, res) => {
 
     if (!refreshToken) {
         return res.status(401).json(
-            new ApiError(401, "unAuthorized request")
+            new ApiError(401, "refresh token is required")
+        )
+    }
+
+    const decoded = jwt.verify(refreshToken, config.REFRESH_TOKEN_SECRET)
+
+    if (!decoded) {
+        return res.status(401).json(
+            new ApiError(401, "Invalid refresh token")
         )
     }
 
@@ -261,7 +272,7 @@ export const rotateTokensController = asyncHandler(async (req, res) => {
 
     if (!session) {
         return res.status(401).json(
-            new ApiError(401, "unAuthorized request")
+            new ApiError(401, "Invalid refresh token")
         )
     }
 
