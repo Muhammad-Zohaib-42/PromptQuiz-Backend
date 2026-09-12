@@ -22,9 +22,21 @@ const quizSchema = new Schema({
         type: String,
         required: [true, "quiz format is required"]
     },
+    completed: {
+        type: Boolean,
+        default: false
+    },
     timer: {
         type: Number,
         required: [true, "per question countdown timer is required"]
+    },
+    score: {
+        type: Number,
+        default: 0
+    },
+    accuracy: {
+        type: Number,
+        default: 0
     },
     quiz: {
         type: [

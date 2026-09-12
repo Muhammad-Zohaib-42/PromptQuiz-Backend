@@ -12,6 +12,13 @@ const router = Router()
 router.post("/create", authUser, quizControllers.createQuizController)
 
 /**
+ * @route PATCH /api/v1/quiz/update/:id
+ * @desc update quiz data
+ * @access private
+ */
+router.patch("/update/:id", authUser, quizControllers.updateQuizController)
+
+/**
  * @route GET /api/v1/quiz/get/:id
  * @desc return quiz with that id
  * @access private

@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import {ApiError} from "../utils/ApiError.js"
 
 export const authUser = asyncHandler(async (req, res, next) => {
-    const accessToken = req.headers?.authorization?.split(" ")[1]
+    const {accessToken} = req.cookies
 
     if (!accessToken) {
         return res.status(401).json(
@@ -13,12 +13,14 @@ export const authUser = asyncHandler(async (req, res, next) => {
         )
     }
 
-    const decoded = jwt.verify(accessToken, config.ACCESS_TOKEN_SECRET)
+    let decoded = null
 
-    if (!decoded) {
-        return res.status(401).json(
-            new ApiError(401, "access token is invalid")
-        )
+    try{
+        decoded = jwt.verify(accessToken, config.ACCESS_TOKEN_SECRET)
+    } catch(error) {
+        return res.status(401).json({
+            message: "Invalid access token"
+        })
     }
 
     const user = await userModel.findById(decoded._id)

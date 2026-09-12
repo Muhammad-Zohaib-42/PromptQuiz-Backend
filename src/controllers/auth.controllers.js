@@ -1,5 +1,5 @@
 import { config } from "../config/config.js";
-import { refreshTokenOptions } from "../constants.js";
+import { accessTokenOptions, refreshTokenOptions } from "../constants.js";
 import { otpModel } from "../models/otp.model.js";
 import { sessionModel } from "../models/session.model.js";
 import { userModel } from "../models/user.model.js";
@@ -43,8 +43,6 @@ export const registerUserController = asyncHandler(async (req, res) => {
         )
     }
 
-    const {accessToken, refreshToken} = generateAccessAndRefreshTokens(user)
-
     const otp = generateOtp()
     const otpHtml = generateOtpHtml(otp)
 
@@ -58,12 +56,12 @@ export const registerUserController = asyncHandler(async (req, res) => {
 
     const response = await sendEmail(email, otpHtml)
 
-    return res.status(201).cookie("refreshToken", refreshToken, refreshTokenOptions).json(
+    return res.status(201).json(
         new ApiResponse(201, "User registered successfully. Please check your email for the OTP verification code", {
             user: {userId: user._id,
+                username: user.username,
             email: user.email,
-            isVerified: user.isVerified},
-            accessToken
+            isVerified: user.isVerified}
         })
     )
 })
@@ -131,14 +129,14 @@ export const verifyEmailController = asyncHandler(async (req, res) => {
         )
     }
 
-    return res.status(200).cookie("refreshToken", refreshToken, refreshTokenOptions).json(
+    return res.status(200).cookie("refreshToken", refreshToken, refreshTokenOptions).cookie("accessToken", accessToken, accessTokenOptions).json(
         new ApiResponse(200, "email verified successfully", {
             user: {
                 _id: user._id,
+                username: user.username,
                 email: user.email,
                 isVerified: user.isVerified
-            },
-            accessToken
+            }
         })
     )
 })
@@ -231,15 +229,14 @@ export const loginUserController = asyncHandler(async (req, res) => {
         )
     }
 
-    return res.status(200).cookie("refreshToken", refreshToken, refreshTokenOptions).json(
+    return res.status(200).cookie("refreshToken", refreshToken, refreshTokenOptions).cookie("accessToken", accessToken, accessTokenOptions).json(
         new ApiResponse(200, "user loggedIn successfully", {
             user: {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
                 isVerified: user.isVerified
-            },
-            accessToken
+            }
         })
     )
 })
@@ -258,12 +255,14 @@ export const rotateTokensController = asyncHandler(async (req, res) => {
         )
     }
 
-    const decoded = jwt.verify(refreshToken, config.REFRESH_TOKEN_SECRET)
+    let decoded = null
 
-    if (!decoded) {
-        return res.status(401).json(
-            new ApiError(401, "Invalid refresh token")
-        )
+    try {
+        decoded = jwt.verify(refreshToken, config.REFRESH_TOKEN_SECRET)
+    } catch(error) {
+        return res.status(401).json({
+            message: "Invalid refresh token"
+        })
     }
 
     const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex")
@@ -285,15 +284,14 @@ export const rotateTokensController = asyncHandler(async (req, res) => {
     session.refreshToken = newRefreshTokenHash
     await session.save()
 
-    return res.status(200).cookie("refreshToken", newRefreshToken, refreshTokenOptions).json(
+    return res.status(200).cookie("refreshToken", newRefreshToken, refreshTokenOptions).cookie("accessToken", accessToken, accessTokenOptions).json(
         new ApiResponse(200, "tokens rotated successfully", {
             user: {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
                 isVerified: user.isVerified
-            },
-            accessToken
+            }
         })
     )
 })
@@ -309,15 +307,25 @@ export const logoutUserController = asyncHandler(async (req, res) => {
 
     if (!refreshToken) {
         return res.status(401).json(
-            new ApiError(401, "unAuthorized request")
+            new ApiError(401, "refresh token is required")
         )
+    }
+
+    let decoded = null
+
+    try {
+        decoded = jwt.verify(refreshToken, config.REFRESH_TOKEN_SECRET)
+    } catch(error) {
+        return res.status(401).json({
+            message: "Invalid refresh token"
+        })
     }
 
     const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex")
 
     const session = await sessionModel.findOneAndUpdate({refreshToken: refreshTokenHash, user: user._id}, {revoke: true}, {returnDocument: "after"})
 
-    return res.status(200).clearCookie("refreshToken", refreshTokenOptions).json(
+    return res.status(200).clearCookie("refreshToken", refreshTokenOptions).clearCookie("accessToken", accessTokenOptions).json(
         new ApiResponse(200, "user loggedOut successfully", {
             session: {
                 revoke: session.revoke
@@ -336,7 +344,7 @@ export const logoutAllController = asyncHandler(async (req, res) => {
 
     await sessionModel.updateMany({user: user._id}, {revoke: true}, {returnDocument: "after"})
 
-    return res.status(200).clearCookie("refreshToken", refreshTokenOptions).json(
+    return res.status(200).clearCookie("refreshToken", refreshTokenOptions).clearCookie("accessToken", accessTokenOptions).json(
         new ApiResponse(200, "user loggedOut from all devices successfully")
     )
 })

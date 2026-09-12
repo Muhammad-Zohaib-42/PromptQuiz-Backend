@@ -13,7 +13,7 @@ export const createQuizController = asyncHandler(async (req, res) => {
     const {topic, length, difficulty, format, timer} = req.body
     const {user} = req
 
-    if ([topic, length, difficulty, format, timer].some(field => !field)) {
+    if ([topic, length, difficulty, format, timer].some(field => field === "")) {
         return res.status(400).json(
             new ApiError(400, "All fields are required")
         )
@@ -35,6 +35,45 @@ export const createQuizController = asyncHandler(async (req, res) => {
         new ApiResponse(201, "quiz generated successfully", {
             quiz
         })
+    )
+})
+
+/**
+ * @route PATCH /api/v1/quiz/create
+ * @desc expects access token in request headers and fields that you want to update in request body to update the quiz  
+ * @access private
+ */
+export const updateQuizController = asyncHandler(async (req, res) => {
+    const {id} = req.params
+    const {user} = req
+    const {score, accuracy, completed, questionIndex, userSelected} = req.body
+
+    const updateFields = {}
+
+    // Fixed: check for undefined so valid numbers and booleans are captured
+    if (score !== undefined) updateFields.score = score;
+    if (accuracy !== undefined) updateFields.accuracy = accuracy;
+    if (completed !== undefined) updateFields.completed = completed;
+    
+    // Fixed: check that questionIndex is a valid number (including 0) and userSelected is provided
+    if (questionIndex !== undefined && questionIndex >= 0 && userSelected !== undefined) {
+        updateFields[`quiz.${questionIndex}.userSelected`] = userSelected;
+    }
+
+    const updatedQuiz = await quizModel.findOneAndUpdate(
+        {_id: id, user: user._id},
+        {$set: updateFields},
+        {returnDocument: "after"}
+    )
+
+    if (!updatedQuiz) {
+        return res.status(404).json(
+            new ApiError(404, "Quiz not found")
+        )
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, "quiz updated successfully", {updatedQuiz})
     )
 })
 
