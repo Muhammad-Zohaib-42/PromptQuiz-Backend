@@ -40,6 +40,10 @@ if (!process.env.ORIGIN) {
     throw new Error("ORIGIN environment variable is not defined");
 }
 
+if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY environment variable is not defined");
+}
+
 export const config = {
     MONGODB_URI: process.env.MONGODB_URI,
     PORT: process.env.PORT,
@@ -50,5 +54,6 @@ export const config = {
     REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    ORIGIN: process.env.ORIGIN
+    ORIGIN: process.env.ORIGIN,
+    BREVO_API_KEY: process.env.BREVO_API_KEY
 }

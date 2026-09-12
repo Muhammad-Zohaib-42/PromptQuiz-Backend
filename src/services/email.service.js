@@ -24,23 +24,52 @@
 //     }
 // }
 
-import { Resend } from "resend";
+
+
+
+// import { Resend } from "resend";
+// import { config } from "../config/config.js";
+
+// const resend = new Resend(config.RESEND_API_KEY);
+
+// export async function sendEmail(email, otpHtml) {
+//     try {
+//         const data = await resend.emails.send({
+//             from: "PromptQuiz <onboarding@resend.dev>", // Or your verified domain if you have one
+//             to: [email],
+//             subject: "Your OTP Verification Code",
+//             html: otpHtml,
+//         });
+
+//         return data;
+//     } catch (error) {
+//         console.error("Failed to send email:", error);
+//         throw error; // Throw so you can catch it in controllers if needed
+//     }
+// }
+
+import { BrevoClient } from "@getbrevo/brevo";
 import { config } from "../config/config.js";
 
-const resend = new Resend(config.RESEND_API_KEY);
+const brevo = new BrevoClient({
+    apiKey: config.BREVO_API_KEY,
+});
 
 export async function sendEmail(email, otpHtml) {
     try {
-        const data = await resend.emails.send({
-            from: "PromptQuiz <onboarding@resend.dev>", // Or your verified domain if you have one
-            to: [email],
+        const data = await brevo.transactionalEmails.sendTransacEmail({
             subject: "Your OTP Verification Code",
-            html: otpHtml,
+            htmlContent: otpHtml,
+            sender: { 
+                name: "PromptQuiz", 
+                email: config.PERSONAL_EMAIL 
+            },
+            to: [{ email: email }],
         });
 
         return data;
     } catch (error) {
-        console.error("Failed to send email:", error);
-        throw error; // Throw so you can catch it in controllers if needed
+        console.error("Failed to send email via Brevo:", error);
+        throw error;
     }
 }
