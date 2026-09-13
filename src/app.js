@@ -21,9 +21,11 @@ app.use((err, req, res, next) => {
 // importing routes
 import authRoutes from "./routes/auth.routes.js"
 import quizRoutes from "./routes/quiz.routes.js"
+import otpRoutes from "./routes/otp.routes.js"
 
 // declaring routes
 app.use("/api/v1/auth", authRoutes)
 app.use("/api/v1/quiz", quizRoutes)
+app.use("/api/v1/otp", otpRoutes)
 
 export { app }
